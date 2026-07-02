@@ -1,5 +1,6 @@
 package com.mydouyin.sign
 
+import android.net.Uri
 import okhttp3.Interceptor
 import okhttp3.Response
 import kotlinx.coroutines.runBlocking
@@ -26,12 +27,10 @@ class DouyinSignInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val req = chain.request()
         val path = req.url.encodedPath
-        // Endpoints that need on-device a_bogus signing: the Douyin web API, plus the
-        // webcast live-room enter API (streams come from there now that the live page's
-        // _ROUTER_DATA scrape is dead).
+        // Every signed Douyin web endpoint lives under /aweme/v1/web/
+        // (feed / detail / user / works / comments / search).
         val isAweme = path.contains("/aweme/v1/web/")
-        val isWebcast = path.contains("/webcast/room/web/enter/")
-        if (!isAweme && !isWebcast) {
+        if (!isAweme) {
             return chain.proceed(req)
         }
 
@@ -48,10 +47,10 @@ class DouyinSignInterceptor(
 
         val awemeId = req.url.queryParameter("aweme_id")
         val secUid = req.url.queryParameter("sec_user_id")
-        val roomId = req.url.queryParameter("room_id_str")
+        val keyword = req.url.queryParameter("keyword")
         val referer = when {
-            isWebcast && !roomId.isNullOrEmpty() -> "https://live.douyin.com/$roomId"
-            isWebcast -> "https://live.douyin.com/"
+            !keyword.isNullOrEmpty() ->
+                "https://www.douyin.com/search/${Uri.encode(keyword)}?type=general"
             !awemeId.isNullOrEmpty() -> "https://www.douyin.com/video/$awemeId"
             !secUid.isNullOrEmpty() -> "https://www.douyin.com/user/$secUid"
             else -> "https://www.douyin.com/"

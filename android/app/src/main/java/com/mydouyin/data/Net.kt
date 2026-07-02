@@ -16,21 +16,14 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-/** Wiring: a single on-device signer, one signed Retrofit client for the Douyin
- *  web API, and a plain client for fetching live room HTML. No backend involved. */
+/** Wiring: a single on-device signer and one signed Retrofit client for the Douyin
+ *  web API. No backend involved. */
 object Net {
 
     lateinit var signer: AbogusSigner
         private set
 
     val api: DouyinApi by lazy { buildApi() }
-
-    val liveClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
-    }
 
     fun init(app: Application) {
         signer = AbogusSigner(app)

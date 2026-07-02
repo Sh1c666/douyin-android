@@ -108,3 +108,17 @@ data class ProfileUserRaw(
 // /aweme/v1/web/user/profile/other/ returns the user object directly under "user"
 // (i.e. {"user": {sec_uid, follower_count, ...}}), NOT nested under "user"."user".
 data class ProfileRaw(val user: ProfileUserRaw? = null)
+
+// /aweme/v1/web/general/search/single/ wraps each hit as {type, aweme_info} (or
+// aweme_inline_info for some inline cards) inside the top-level "data" array.
+data class SearchItemRaw(
+    val type: Int? = null,
+    @SerializedName("aweme_info") val awemeInfo: AwemeRaw? = null,
+    @SerializedName("aweme_inline_info") val awemeInlineInfo: AwemeRaw? = null
+)
+
+data class SearchRaw(
+    val data: List<SearchItemRaw>? = null,
+    @SerializedName("has_more") val hasMore: Int? = null,
+    @SerializedName("status_code") val statusCode: Int? = null
+)

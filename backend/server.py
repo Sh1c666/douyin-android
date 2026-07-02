@@ -22,7 +22,6 @@ sys.path.insert(0, str(HERE))
 load_dotenv(HERE / ".env")
 
 from douyin.client import DouyinClient  # noqa: E402
-from douyin.live import get_live  # noqa: E402
 
 COOKIE = os.environ.get("DY_COOKIES", "")
 _headers_ref = {}
@@ -113,14 +112,6 @@ def comment_replies(aweme_id: str, comment_id: str, cursor: str = "0", count: st
 def search(keyword: str, offset: str = "0", count: str = "20"):
     try:
         return JSONResponse(client.search(keyword, offset=offset, count=count))
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=str(e))
-
-
-@app.get("/api/live/{room_id}")
-def live(room_id: str):
-    try:
-        return JSONResponse(get_live(room_id, cookie_str=COOKIE))
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 

@@ -72,6 +72,30 @@ object Mapper {
         list = (raw?.awemeList ?: emptyList()).mapNotNull { aweme(it) }
     )
 
+    fun search(raw: SearchRaw?, offset: String): PostsPage {
+        // Each hit is {type, aweme_info} (some inline cards use aweme_inline_info).
+        val list = (raw?.data ?: emptyList())
+            .mapNotNull { it.awemeInfo ?: it.awemeInlineInfo }
+            .mapNotNull { aweme(it) }
+            .filter { it.video.url.isNotEmpty() || it.isImage }
+        // Search paginates by offset (server returns no cursor), so advance by result count.
+        val nextOffset = ((offset.toLongOrNull() ?: 0L) + list.size).toString()
+        val statusCode = raw?.statusCode
+        val note = when {
+            statusCode != null && statusCode != 0 ->
+                "搜索被拒 status_code=$statusCode（签名未过/风控）"
+            raw?.data.isNullOrEmpty() ->
+                "无结果（也可能被风控返空，换个词或稍后再试）"
+            else -> ""
+        }
+        return PostsPage(
+            hasMore = raw?.hasMore ?: 0,
+            maxCursor = nextOffset,
+            list = list,
+            note = note
+        )
+    }
+
     fun detail(raw: DetailRaw?): Aweme = aweme(raw?.awemeDetail) ?: Aweme()
 
     fun comments(raw: CommentsRaw?): CommentsPage {

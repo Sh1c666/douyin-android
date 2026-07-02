@@ -65,7 +65,10 @@ data class UserInfo(
 data class PostsPage(
     @SerializedName("has_more") val hasMore: Int = 0,
     @SerializedName("max_cursor") val maxCursor: String = "0",
-    val list: List<Aweme> = emptyList()
+    val list: List<Aweme> = emptyList(),
+    /** Human-readable reason when the page came back empty (风控/无结果…).
+     *  Empty when there's nothing to flag. */
+    val note: String = ""
 )
 
 data class CommentUser(
@@ -94,20 +97,6 @@ data class RepliesPage(
     @SerializedName("has_more") val hasMore: Int = 0,
     val cursor: String = "0",
     val list: List<Comment> = emptyList()
-)
-
-data class LiveInfo(
-    @SerializedName("room_id") val roomId: String = "",
-    val title: String = "",
-    val nickname: String = "",
-    val status: String = "",
-    @SerializedName("is_live") val isLive: Boolean = false,
-    val flv: String = "",
-    val hls: String = "",
-    val cover: String = "",
-    /** Human-readable reason when no stream could be obtained (风控/未开播/房间无效…),
-     *  surfaced to the UI for diagnosis. Empty when everything is fine. */
-    val note: String = ""
 )
 
 /** Result of the in-app "test connection" check: does a real feed request succeed. */

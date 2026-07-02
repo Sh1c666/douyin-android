@@ -104,20 +104,25 @@ object DouyinParams {
         put("round_trip_time", "0")
     }.tail()
 
-    /** Signed params for the webcast live-room enter API. Minimal, webcast-specific set
-     *  (NOT the aweme webapp base()) — a_bogus/verifyFp/fp are added by the interceptor. */
-    fun liveEnter(roomId: String): Map<String, String> = linkedMapOf(
-        "aid" to "6383",
-        "app_name" to "douyin_web",
-        "live_id" to "1",
-        "device_platform" to "web",
-        "language" to "zh-CN",
-        "room_id_str" to roomId,
-        "web_rid" to roomId,
-        "enter_from" to "web_live",
-        "cookie_enabled" to "true",
-        "is_need_double_stream" to "false",
-        "insert_task_id" to "",
-        "msToken" to msToken(),
-    )
+    /** Signed params for general video search (/aweme/v1/web/general/search/single/).
+     *  Matches cv-cat/DouYin_Spider's search_general_work: search_channel=aweme_general,
+     *  version bumped to 19.6.0 (search uses a newer client version than the feed).
+     *  a_bogus/verifyFp/fp are added by the interceptor; offset is incremented by the
+     *  caller for pagination. */
+    fun search(keyword: String, offset: String = "0", count: String = "20"): Map<String, String> =
+        base().apply {
+            put("version_code", "190600")
+            put("version_name", "19.6.0")
+            put("search_channel", "aweme_general")
+            put("enable_history", "1")
+            put("keyword", keyword)
+            put("search_source", "tab_search")
+            put("query_correct_type", "1")
+            put("is_filter_search", "0")
+            put("from_group_id", "")
+            put("offset", offset)
+            put("count", count)
+            put("need_filter_settings", if (offset == "0") "1" else "0")
+            put("list_type", "single")
+        }.tail()
 }

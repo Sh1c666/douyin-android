@@ -30,13 +30,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.mydouyin.ui.feed.FeedScreen
-import com.mydouyin.ui.live.LiveScreen
 import com.mydouyin.ui.profile.ProfileScreen
+import com.mydouyin.ui.search.SearchScreen
 import com.mydouyin.ui.settings.SettingsScreen
 
 object Routes {
     const val FEED = "feed"
-    const val LIVE = "live"
+    const val SEARCH = "search"
     const val SETTINGS = "settings"
     const val PROFILE = "profile/{secUid}"
     fun profile(secUid: String) = "profile/${Uri.encode(secUid)}"
@@ -46,7 +46,7 @@ private data class TopDest(val route: String, val label: String)
 
 private val TOP_DEST = listOf(
     TopDest(Routes.FEED, "首页"),
-    TopDest(Routes.LIVE, "直播"),
+    TopDest(Routes.SEARCH, "搜索"),
     TopDest(Routes.SETTINGS, "设置"),
 )
 
@@ -119,8 +119,8 @@ fun AppRoot() {
                     onOpenProfile = { nav.navigate(Routes.profile(it)) }
                 )
             }
-            composable(Routes.LIVE) {
-                LiveScreen(onBack = { nav.popBackStack() })
+            composable(Routes.SEARCH) {
+                SearchScreen()
             }
             composable(Routes.SETTINGS) {
                 SettingsScreen()
