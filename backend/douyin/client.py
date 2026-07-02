@@ -159,7 +159,9 @@ class DouyinClient:
         self.verify_fp = self.cookie.get("s_v_web_id", "")
         self.signer = signer or Signer()
         self.s = requests.Session()
-        self.s.verify = False
+        # 校验 TLS：出站请求带着 cookie（含 sessionid），关掉校验会被网络中间人截获。
+        # 除非你明确在自签证书的代理后调试，否则保持 True。代理调试时临时设 False。
+        self.s.verify = True
 
     # ---- core signed GET -------------------------------------------------
     def _headers(self, refer: str):

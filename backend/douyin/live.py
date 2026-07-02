@@ -49,9 +49,16 @@ def _walk_stream_url(router: dict) -> dict:
 
 
 def get_live(room_id: str, cookie_str: str = "") -> dict:
-    """Return {status, title, flv, hls, nickname} for a live room id / share id."""
+    """Return {status, title, flv, hls, nickname} for a live room id / share id.
+
+    .. deprecated::
+        抖音直播页已不再在 _ROUTER_DATA 里嵌入 stream_url（未登录时为 null），这条
+        HTML 抓取路径在当前抖音页面上会返回空的 flv/hls。Android 客户端已改用签名
+        的 webcast /enter 端点取流（见 LiveFetcher.parseEnter）。本函数仅留作旧方案
+        参考，如需在 Python 侧取流请改为调用签名后的 enter 端点。
+    """
     s = requests.Session()
-    s.verify = False
+    s.verify = True   # 不要关 TLS 校验，否则 cookie 可能被中间人截获
     headers = {
         "user-agent": UA,
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",

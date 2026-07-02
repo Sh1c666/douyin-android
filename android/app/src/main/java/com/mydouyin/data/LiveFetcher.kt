@@ -55,14 +55,25 @@ object LiveFetcher {
 
     /** Parse the signed webcast enter response. Logs the raw body so a real-device test
      *  can reveal the exact shape — this endpoint can't be exercised from a dev machine
-     *  without the on-device signer + cookie + a live room. */
+     *  without the on-device signer + cookie + a live room.
+     *
+     *  On failure it fills [LiveInfo.note] with the most likely cause (风控 / 房间无效 /
+     *  未开播) so the UI can show something useful instead of a bare "未取到流地址". */
     fun parseEnter(raw: String, roomId: String): LiveInfo {
         Log.d(TAG, "enter resp (first 1500): ${raw.take(1500)}")
         val root: JsonElement = try {
             JsonParser.parseString(raw)
         } catch (e: Exception) {
             Log.w(TAG, "enter resp is not JSON: ${e.message}")
-            JsonObject()
+            return LiveInfo(roomId = roomId, note = "响应非 JSON（疑似风控验证页或登录失效）")
+        }
+
+        // Douyin status_code: 0 = ok, anything else = error / 风控 block.
+        val statusCode = root.takeIf { it.isJsonObject }?.asJsonObject
+            ?.get("status_code")?.takeIf { it.isJsonPrimitive }?.asString
+        if (statusCode != null && statusCode != "0") {
+            Log.w(TAG, "enter rejected: status_code=$statusCode")
+            return LiveInfo(roomId = roomId, note = "抖音拒绝请求 status_code=$statusCode（签名未过/风控）")
         }
 
         // stream_url sits inside the room object; walkFind returns that parent, then drill in.
@@ -76,14 +87,23 @@ object LiveFetcher {
             ?: ""
         val hls = streamObj.get("hls_pull_url")?.takeIf { it.isJsonPrimitive }?.asString ?: ""
 
-        val room = walkFind({ o -> o.has("title") && (o.has("status") || o.has("room_id")) }, root) ?: JsonObject()
+        // Prefer the same object that carries stream_url (the room has both); fall back to a
+        // tight title+status+owner signature so a common key like "title" can't match a sibling.
+        val room = streamParent.takeIf { it.has("title") && it.has("owner") }
+            ?: walkFind({ o -> o.has("title") && o.has("status") && o.has("owner") }, root)
+            ?: JsonObject()
         val title = room.get("title")?.takeIf { it.isJsonPrimitive }?.asString ?: ""
         val ownerObj = room.get("owner")?.takeIf { it.isJsonObject }?.asJsonObject
         val nickname = ownerObj?.get("nickname")?.takeIf { it.isJsonPrimitive }?.asString ?: ""
         val status = room.get("status")?.takeIf { it.isJsonPrimitive }?.asString ?: ""
         val isLive = status == "2"   // webcast status: 2 = streaming
 
-        Log.d(TAG, "enter parsed: status=$status isLive=$isLive hasHls=${hls.isNotBlank()} hasFlv=${flv.isNotBlank()}")
+        val note = when {
+            flv.isBlank() && hls.isBlank() && !isLive -> "主播未开播"
+            flv.isBlank() && hls.isBlank() -> "未取到拉流地址（房间数据为空：房间号无效或风控）"
+            else -> ""
+        }
+        Log.d(TAG, "enter parsed: status=$status isLive=$isLive hasHls=${hls.isNotBlank()} hasFlv=${flv.isNotBlank()} note=$note")
         return LiveInfo(
             roomId = roomId,
             title = title,
@@ -91,7 +111,8 @@ object LiveFetcher {
             status = status,
             isLive = isLive,
             flv = flv,
-            hls = hls
+            hls = hls,
+            note = note
         )
     }
 

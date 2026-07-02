@@ -44,7 +44,7 @@ fun LiveScreen(initialRoomId: String? = null, onBack: () -> Unit) {
     var loading by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
 
-    val player = remember { com.mydouyin.player.Players.new(context) }
+    val player = remember { com.mydouyin.player.Players.new(context.applicationContext) }
     DisposableEffect(Unit) { onDispose { player.release() } }
 
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -56,7 +56,7 @@ fun LiveScreen(initialRoomId: String? = null, onBack: () -> Unit) {
                 info = li
                 val url = li.hls.ifBlank { li.flv }
                 if (url.isBlank()) {
-                    status = if (!li.isLive) "主播未开播" else "未取到流地址"
+                    status = li.note.ifBlank { if (!li.isLive) "主播未开播" else "未取到流地址" }
                 } else {
                     player.setMediaItem(MediaItem.fromUri(url))
                     player.prepare()

@@ -39,7 +39,11 @@ object Net {
     }
 
     private fun buildApi(): DouyinApi {
-        val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
+        val logging = HttpLoggingInterceptor().apply {
+            // release 包不打请求日志（URL 含 a_bogus，虽非长期密钥但避免污染 logcat）
+            level = if (com.mydouyin.BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC
+                    else HttpLoggingInterceptor.Level.NONE
+        }
         val ok = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

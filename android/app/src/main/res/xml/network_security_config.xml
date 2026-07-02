@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Backend runs on the LAN over plain HTTP. Video CDNs are HTTPS already. -->
-    <base-config cleartextTrafficPermitted="true">
+    <!-- 只信任系统 CA，禁止明文。所有签名请求都带着用户的 sessionid（账号级凭证），
+         信任用户 CA（Charles/Fiddler/MDM 推送）会让中间人透明截获 cookie。
+         App 现在直连抖音，无本地后端，不需要明文也不需要用户 CA。 -->
+    <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
-            <certificates src="user" />
         </trust-anchors>
     </base-config>
+
+    <!-- 如果将来重新加回局域网明文后端，只对那个 IP 放行明文，不要全局放开：
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.1.10</domain>
+    </domain-config>
+    -->
 </network-security-config>

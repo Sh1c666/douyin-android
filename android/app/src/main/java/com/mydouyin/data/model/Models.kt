@@ -96,11 +96,6 @@ data class RepliesPage(
     val list: List<Comment> = emptyList()
 )
 
-data class SearchPage(
-    @SerializedName("has_more") val hasMore: Int = 0,
-    val list: List<Aweme> = emptyList()
-)
-
 data class LiveInfo(
     @SerializedName("room_id") val roomId: String = "",
     val title: String = "",
@@ -109,10 +104,11 @@ data class LiveInfo(
     @SerializedName("is_live") val isLive: Boolean = false,
     val flv: String = "",
     val hls: String = "",
-    val cover: String = ""
+    val cover: String = "",
+    /** Human-readable reason when no stream could be obtained (风控/未开播/房间无效…),
+     *  surfaced to the UI for diagnosis. Empty when everything is fine. */
+    val note: String = ""
 )
-
-data class Health(val ok: Boolean = false, @SerializedName("logged_in") val loggedIn: Boolean = false)
 
 /** Result of the in-app "test connection" check: does a real feed request succeed. */
 data class ConnResult(

@@ -257,7 +257,4 @@ private fun WorkThumb(aweme: Aweme, isLastWatched: Boolean = false, onClick: () 
     }
 }
 
-@Composable
-private fun Spacer8() = Box(Modifier.size(width = 0.dp, height = 8.dp))
-
 private fun Int.ifZero(fallback: () -> Int): Int = if (this == 0) fallback() else this

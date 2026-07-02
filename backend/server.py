@@ -1,8 +1,11 @@
 """FastAPI server exposing the read-only Douyin client as clean JSON.
 
-Run:  uvicorn server:app --host 0.0.0.0 --port 8000
+Run:  uvicorn server:app --host 127.0.0.1 --port 8000
 The Android client talks only to this server — no signing, no cookies, no risk
 control on the device side.
+
+安全默认（公开仓库）：默认只监听 127.0.0.1、CORS 不放开跨域。需要局域网共享时：
+  DY_HOST=0.0.0.0 DY_CORS_ORIGINS=http://192.168.1.20:8080 uvicorn server:app --port 8000
 """
 import json
 import os
@@ -34,12 +37,16 @@ client = DouyinClient(
 )
 
 app = FastAPI(title="Douyin Read-Only Backend", version="1.0")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS 默认不放开（原生 Android 客户端不受 CORS 约束）。仅在显式配置时允许指定来源，
+# 避免 0.0.0.0 + allow_origins=* 时同网段任意网页读取 /api/* 并间接拿到 cookie。
+_cors = [o.strip() for o in os.environ.get("DY_CORS_ORIGINS", "").split(",") if o.strip()]
+if _cors:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
 
 
 @app.get("/api/health")
@@ -121,4 +128,5 @@ def live(room_id: str):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # 默认只监听本机；需要局域网共享时设 DY_HOST=0.0.0.0。
+    uvicorn.run(app, host=os.environ.get("DY_HOST", "127.0.0.1"), port=8000)

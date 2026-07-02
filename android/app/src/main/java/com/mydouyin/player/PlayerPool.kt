@@ -35,6 +35,7 @@ class PlayerPool(context: Context, private val size: Int = 5) {
     }
     private val slotIndex = IntArray(size) { -1 } // which page each slot currently holds
     private var activeIndex = -1                  // the one page allowed to play
+    private var released = false                  // set by release(); later calls become no-ops
 
     private fun slot(index: Int): Int = ((index % size) + size) % size
     fun playerFor(index: Int): ExoPlayer = players[slot(index)]
@@ -42,6 +43,7 @@ class PlayerPool(context: Context, private val size: Int = 5) {
     /** Load [url] into the slot for [index] (only re-prepares when the slot changes page),
      *  then reapply the play rule so the active page plays and a recycled slot stops. */
     fun bind(index: Int, url: String?) {
+        if (released) return
         val s = slot(index)
         val p = players[s]
         if (slotIndex[s] != index) {
@@ -60,6 +62,7 @@ class PlayerPool(context: Context, private val size: Int = 5) {
 
     /** Pause everything, then play only the player bound to [index]. */
     fun setActive(index: Int) {
+        if (released) return
         activeIndex = index
         for (s in 0 until size) {
             players[s].playWhenReady = (slotIndex[s] == index)
@@ -68,18 +71,21 @@ class PlayerPool(context: Context, private val size: Int = 5) {
 
     /** Tap-to-toggle on the active page. */
     fun toggle(index: Int) {
+        if (released) return
         val s = slot(index)
         if (slotIndex[s] == index) players[s].playWhenReady = !players[s].playWhenReady
     }
 
-    fun pauseAll() { players.forEach { it.playWhenReady = false } }
+    fun pauseAll() { if (!released) players.forEach { it.playWhenReady = false } }
 
     /** Re-resume the active page (e.g. returning from background). */
-    fun resumeActive() { if (activeIndex >= 0) setActive(activeIndex) }
+    fun resumeActive() { if (!released && activeIndex >= 0) setActive(activeIndex) }
 
-    fun setMuted(muted: Boolean) { players.forEach { it.volume = if (muted) 0f else 1f } }
+    fun setMuted(muted: Boolean) { if (!released) players.forEach { it.volume = if (muted) 0f else 1f } }
 
     fun release() {
+        if (released) return
+        released = true
         players.forEach { it.release() }
     }
 }
