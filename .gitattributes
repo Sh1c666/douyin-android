@@ -1,0 +1,17 @@
+# 统一换行符，消除跨平台 CRLF 警告
+* text=auto eol=lf
+
+# Windows 批处理必须 CRLF
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# 二进制
+*.jar   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.gif   binary
+*.ico   binary
+*.apk   binary
+*.aab   binary

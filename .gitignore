@@ -1,0 +1,64 @@
+# =============================================================================
+# 刷刷 — 自用抖音只读客户端
+# 根目录 .gitignore（公开仓库，密钥零容忍）
+# =============================================================================
+
+# ---- 密钥 / 凭据 / 抓包数据（绝不上传）-------------------------------------
+.env
+**/.env
+.env.*
+backend/headers_ref.json
+backend/sample_curl.sh
+backend/feed_sample.json
+backend/resp_original.json
+backend/server.log
+**/server.log
+*.log
+# 任何看起来像 cookie / token 的导出
+*cookie*.txt
+*secrets*.json
+
+# ---- 第三方参考克隆（cv-cat/DouYin_Spider，含收款二维码 + 嵌套 .git）--------
+_spider_ref/
+
+# ---- Android 构建产物 / IDE / 本地配置 -------------------------------------
+android/.gradle/
+android/.idea/
+android/.kotlin/
+android/build/
+android/app/build/
+android/captures/
+android/local.properties
+# 签名密钥（万一）
+*.keystore
+*.jks
+*.p12
+*.pem
+# 产物
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# ---- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+backend/douyin/__pycache__/
+backend/__pycache__/
+
+# ---- Node（签名桥接依赖，可重装）-------------------------------------------
+node_modules/
+backend/sign/node_modules/
+backend/sign/package-lock.json
+
+# ---- OS ---------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db

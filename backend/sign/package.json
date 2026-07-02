@@ -1,0 +1,10 @@
+{
+  "name": "douyin-sign",
+  "version": "1.0.0",
+  "private": true,
+  "description": "a_bogus signature bridge for the read-only Douyin backend",
+  "main": "sign_bridge.js",
+  "dependencies": {
+    "jsrsasign": "^11.1.0"
+  }
+}

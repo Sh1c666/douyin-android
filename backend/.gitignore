@@ -1,0 +1,15 @@
+# Secrets & captured data — NEVER commit
+.env
+headers_ref.json
+sample_curl.sh
+feed_sample.json
+resp_original.json
+server.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Node (sign bridge deps)
+sign/node_modules/
+sign/package-lock.json
