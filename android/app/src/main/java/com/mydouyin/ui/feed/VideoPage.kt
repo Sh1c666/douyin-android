@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,6 +40,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.changedToDown
@@ -161,13 +163,6 @@ fun VideoPage(
                                         longJob?.cancel()
                                         decided = true
                                         horiz = abs(dx) > abs(dy)
-                                    }
-                                    // If 2x was on and the finger then moves (a swipe starts),
-                                    // drop 2x and hand the drag to the pager.
-                                    if (twoX && moved) {
-                                        twoX = false
-                                        onFastForwardChange(false)
-                                        player.playbackParameters = PlaybackParameters(1f)
                                     }
                                     if (!c.pressed) {
                                         when {
@@ -292,25 +287,16 @@ private fun BoxScope.RightRail(aweme: Aweme, onComments: () -> Unit, onProfile: 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        Box(
-            contentAlignment = Alignment.BottomCenter,
-            modifier = Modifier.clickable { onProfile() }
-        ) {
-            AsyncImage(
-                model = aweme.author.avatar,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(Color.DarkGray)
-            )
-            Box(
-                Modifier.align(Alignment.BottomCenter).size(20.dp)
-                    .clip(CircleShape).background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) { Icon(Icons.Filled.Person, null, Modifier.size(14.dp), tint = Color.White) }
-        }
+        AsyncImage(
+            model = aweme.author.avatar,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(46.dp)
+                .clip(CircleShape)
+                .background(Color.DarkGray)
+                .clickable { onProfile() }
+        )
         RailIcon(Icons.Filled.Favorite, fmtCount(aweme.stats.digg))
         RailIcon(Icons.Filled.Comment, fmtCount(aweme.stats.comment), onClick = onComments)
         RailIcon(Icons.Filled.Share, fmtCount(aweme.stats.share))
@@ -319,13 +305,23 @@ private fun BoxScope.RightRail(aweme: Aweme, onComments: () -> Unit, onProfile: 
 
 @Composable
 private fun RailIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: (() -> Unit)? = null) {
+    val animScale = remember { Animatable(1f) }
+    val scope = rememberCoroutineScope()
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             Modifier
                 .size(46.dp)
                 .clip(CircleShape)
-                .then(if (onClick != null) Modifier.background(Color.Black.copy(alpha = 0.25f)) else Modifier)
-                .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+                .scale(animScale.value)
+                .background(Color.Black.copy(alpha = 0.25f))
+                .clickable {
+                    scope.launch {
+                        animScale.snapTo(1f)
+                        animScale.animateTo(1.25f, tween(100))
+                        animScale.animateTo(1f, tween(150))
+                    }
+                    onClick?.invoke()
+                },
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, null, Modifier.size(30.dp), tint = Color.White)
@@ -336,6 +332,9 @@ private fun RailIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, labe
 
 @Composable
 private fun BoxScope.BottomInfo(aweme: Aweme, onProfile: () -> Unit) {
+    var descExpanded by remember { mutableStateOf(false) }
+    var descOverflow by remember { mutableStateOf(false) }
+
     Column(
         Modifier.align(Alignment.BottomStart).fillMaxWidth()
             .padding(start = 12.dp, end = 72.dp, bottom = 20.dp)
@@ -352,10 +351,21 @@ private fun BoxScope.BottomInfo(aweme: Aweme, onProfile: () -> Unit) {
                 aweme.desc,
                 color = Color.White,
                 fontSize = 13.sp,
-                maxLines = 2,
+                maxLines = if (descExpanded) Int.MAX_VALUE else 2,
                 overflow = TextOverflow.Ellipsis,
+                onTextLayout = { result -> descOverflow = result.hasVisualOverflow },
                 modifier = Modifier.padding(top = 6.dp)
+                    .clickable { descExpanded = !descExpanded }
             )
+            if (descOverflow || descExpanded) {
+                Text(
+                    if (descExpanded) "收起" else "展开",
+                    color = Color(0xFF8E8E93),
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 2.dp)
+                        .clickable { descExpanded = !descExpanded }
+                )
+            }
         }
         Row(
             Modifier.padding(top = 8.dp),

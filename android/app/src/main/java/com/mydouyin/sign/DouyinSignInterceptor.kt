@@ -35,14 +35,18 @@ class DouyinSignInterceptor(
         }
 
         val query = req.url.query ?: ""
+        val isSearch = path.contains("/aweme/v1/web/general/search/single/")
         val ab = if (query.isNotEmpty()) runBlocking { signer.sign(query) } else ""
 
         val urlBuilder = req.url.newBuilder()
         if (ab.isNotEmpty()) urlBuilder.addQueryParameter("a_bogus", ab)
-        val vfp = verifyFp()
-        if (vfp.isNotEmpty()) {
-            urlBuilder.addQueryParameter("verifyFp", vfp)
-            urlBuilder.addQueryParameter("fp", vfp)
+        // Python's search_general_work does NOT add verifyFp/fp — only other endpoints do.
+        if (!isSearch) {
+            val vfp = verifyFp()
+            if (vfp.isNotEmpty()) {
+                urlBuilder.addQueryParameter("verifyFp", vfp)
+                urlBuilder.addQueryParameter("fp", vfp)
+            }
         }
 
         val awemeId = req.url.queryParameter("aweme_id")
@@ -50,7 +54,7 @@ class DouyinSignInterceptor(
         val keyword = req.url.queryParameter("keyword")
         val referer = when {
             !keyword.isNullOrEmpty() ->
-                "https://www.douyin.com/search/${Uri.encode(keyword)}?type=general"
+                "https://www.douyin.com/search/${Uri.encode(keyword)}?aid=${java.util.UUID.randomUUID()}&type=general"
             !awemeId.isNullOrEmpty() -> "https://www.douyin.com/video/$awemeId"
             !secUid.isNullOrEmpty() -> "https://www.douyin.com/user/$secUid"
             else -> "https://www.douyin.com/"

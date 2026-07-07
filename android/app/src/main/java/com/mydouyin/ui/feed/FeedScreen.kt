@@ -101,6 +101,7 @@ fun FeedScreen(
                 VerticalPager(
                     state = pagerState,
                     beyondViewportPageCount = 1,
+                    userScrollEnabled = !fastForward,
                     modifier = Modifier.fillMaxSize()
                 ) { page ->
                     val isActive by remember(page) {
